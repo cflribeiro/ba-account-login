@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="2000" viewBox="0 0 1600 2000" role="img" aria-label="Engine hangar image placeholder">
+  <rect width="1600" height="2000" fill="#E7ECF1"/>
+  <rect x="80" y="80" width="1440" height="1840" fill="none" stroke="#B9BFC7" stroke-width="4" stroke-dasharray="16 12"/>
+  <text x="800" y="960" text-anchor="middle" font-family="Open Sans, sans-serif" font-size="56" fill="#565656">Engine hangar</text>
+  <text x="800" y="1040" text-anchor="middle" font-family="Open Sans, sans-serif" font-size="28" fill="#8C8C8C">Image placeholder</text>
+</svg>
