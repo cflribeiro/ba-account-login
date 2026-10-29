@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/account.css?v=40">
+    <link rel="stylesheet" href="css/account.css?v=45">
   </head>
   <body>
     <a class="skip" href="#panel">Skip to sign in</a>
@@ -21,22 +21,28 @@
       </section>
     </div>
     <div class="review">
-      <label>Screen
-        <select id="rev-screen">
-          <option value="sign-in">Sign in</option>
-          <option value="sign-in-error">Sign in, incorrect credentials</option>
-          <option value="forgot">Forgot password</option>
-          <option value="sent">Reset email sent</option>
-          <option value="security">Security verification</option>
-          <option value="email-code">Email code</option>
-          <option value="email-code-invalid">Email code, invalid</option>
-          <option value="email-code-expired">Email code, expired</option>
-          <option value="auth-code">Authenticator</option>
-          <option value="timeout">Link expired</option>
-          <option value="handoff">Handoff</option>
-        </select>
-      </label>
+      <button type="button" class="review-toggle" id="rev-toggle" aria-label="Change review screen" aria-haspopup="listbox" aria-expanded="false" aria-controls="rev-menu">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="5" height="5" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="9" y="2" width="5" height="5" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="2" y="9" width="5" height="5" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="9" y="9" width="5" height="5" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </button>
+      <div class="review-menu" id="rev-menu" role="listbox" aria-label="Review screens" hidden>
+        <button type="button" role="option" data-screen="sign-in">Sign in</button>
+        <button type="button" role="option" data-screen="sign-in-error">Sign in, incorrect credentials</button>
+        <button type="button" role="option" data-screen="forgot">Forgot password</button>
+        <button type="button" role="option" data-screen="sent">Reset email sent</button>
+        <button type="button" role="option" data-screen="security">Security verification</button>
+        <button type="button" role="option" data-screen="email-code">Email code</button>
+        <button type="button" role="option" data-screen="email-code-invalid">Email code, invalid</button>
+        <button type="button" role="option" data-screen="email-code-expired">Email code, expired</button>
+        <button type="button" role="option" data-screen="auth-code">Authenticator</button>
+        <button type="button" role="option" data-screen="timeout">Link expired</button>
+        <button type="button" role="option" data-screen="handoff">Handoff</button>
+      </div>
     </div>
-    <script src="js/account.js?v=42"></script>
+    <script src="js/account.js?v=45"></script>
   </body>
 </html>

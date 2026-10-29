@@ -411,7 +411,7 @@ function handoffHtml() {
     <h2>Networks</h2>
     <ul>
       <li>The list is Production and Sandbox. There is no way to add a network on this page.</li>
-      <li>The screen list in the corner is for review. It is not part of the sign-in page.</li>
+      <li>The icon at the top right opens the screen list for review. It is not part of the sign-in page.</li>
     </ul>
 
     <h2>Stage photographs</h2>
@@ -477,14 +477,21 @@ function reviewValue() {
   return state.screen;
 }
 
-let syncingReview = false;
 let networkOpenedAt = 0;
 
+function setReviewOpen(open) {
+  const toggle = document.getElementById("rev-toggle");
+  const menu = document.getElementById("rev-menu");
+  if (!toggle || !menu) return;
+  toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  menu.hidden = !open;
+}
+
 function syncReview() {
-  const screen = document.getElementById("rev-screen");
-  syncingReview = true;
-  if (screen && document.activeElement !== screen) screen.value = reviewValue();
-  syncingReview = false;
+  const current = reviewValue();
+  document.querySelectorAll("#rev-menu [data-screen]").forEach((button) => {
+    button.setAttribute("aria-selected", button.dataset.screen === current ? "true" : "false");
+  });
 }
 
 function render() {
@@ -567,7 +574,8 @@ function placeContent() {
   if (!column || !scroll || !block) return;
 
   const fit = Number(column.style.getPropertyValue("--fit") || "1") || 1;
-  const minGap = Math.round(48 * fit);
+  const mobileMin = Number.parseFloat(getComputedStyle(block).getPropertyValue("--mobile-content-min")) || 0;
+  const minGap = Math.round(Math.max(48, mobileMin) * fit);
   const maxGap = Math.round(Math.min(200, Math.max(minGap, window.innerHeight * 0.22)));
   const free = scroll.clientHeight - block.offsetHeight;
 
@@ -747,10 +755,24 @@ function init() {
     state.dropdownOpen = false;
     render();
   });
-  document.querySelector(".review").addEventListener("click", onClick);
-  document.getElementById("rev-screen").addEventListener("change", (event) => {
-    if (syncingReview) return;
-    applyReview(event.target.value);
+  document.getElementById("rev-toggle").addEventListener("click", (event) => {
+    event.stopPropagation();
+    const open = document.getElementById("rev-toggle").getAttribute("aria-expanded") !== "true";
+    setReviewOpen(open);
+  });
+  document.getElementById("rev-menu").addEventListener("click", (event) => {
+    const option = event.target.closest("[data-screen]");
+    if (!option) return;
+    event.stopPropagation();
+    setReviewOpen(false);
+    applyReview(option.dataset.screen);
+  });
+  document.addEventListener("click", (event) => {
+    if (event.target.closest(".review")) return;
+    setReviewOpen(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setReviewOpen(false);
   });
   window.setInterval(() => {
     if (state.resendIn <= 0) return;
