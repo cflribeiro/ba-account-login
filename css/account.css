@@ -855,12 +855,12 @@ input {
     flex: 1 1 auto;
     width: 100%;
     min-height: 0;
-    padding: 12px 24px 16px;
+    padding: 8px 24px 16px;
   }
 
   .form-block {
-    /* Keep lockup → Sign in from collapsing when error rows force --fit down. */
-    --mobile-content-min: 52px;
+    /* Keep lockup → content tight on mobile; floor so errors don't crush the gap. */
+    --mobile-content-min: 28px;
   }
 
   .field {
