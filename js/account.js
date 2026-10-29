@@ -573,9 +573,10 @@ function fitForm() {
   block.style.marginTop = `${reserved}px`;
 }
 
-/** Keep brand top-pinned; ease content down on tall screens without mid-column float.
- *  margin-top = clamp(minGap, freeSpace / 2, maxGap)
- *  minGap ≈ logo rhythm (48 desktop / --mobile-content-min); maxGap caps drift (~22vh, hard cap 200). */
+/** Keep brand top-pinned.
+ *  Desktop: margin-top = clamp(minGap, freeSpace / 2, maxGap) — eases short copy down a bit.
+ *  Mobile: fixed minGap only — no optical centering, so short screens (e.g. Check your email)
+ *  stay under the lockup instead of floating mid-column. */
 function placeContent() {
   const column = document.querySelector(".form-col");
   const scroll = document.querySelector(".form-scroll");
@@ -586,20 +587,18 @@ function placeContent() {
   const mobileMin = Number.parseFloat(
     getComputedStyle(block).getPropertyValue("--mobile-content-min")
   ) || 0;
-  // Mobile keeps a near-fixed floor so --fit doesn't pull Sign in into the lockup.
-  // Desktop scales the 48px rhythm with --fit.
   const minGap = mobileMin
     ? Math.round(Math.max(mobileMin * 0.9, mobileMin * Math.max(fit, 0.85)))
     : Math.round(48 * fit);
-  const maxGap = Math.round(Math.min(200, Math.max(minGap, window.innerHeight * 0.22)));
 
-  // Temporarily zero margin to measure free space for optical centering.
   block.style.marginTop = "0px";
   const free = scroll.clientHeight - block.offsetHeight;
 
   let top = Math.min(minGap, Math.max(0, free));
-  if (free > minGap) {
-    const ideal = free / 2;
+  if (!mobileMin && free > minGap) {
+    // Tall screens: ease content a bit below the lockup without floating mid-column.
+    const maxGap = Math.round(Math.min(132, Math.max(minGap, window.innerHeight * 0.12)));
+    const ideal = Math.min(free * 0.32, maxGap);
     top = Math.min(maxGap, Math.max(minGap, ideal));
   }
   block.style.marginTop = `${top}px`;

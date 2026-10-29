@@ -113,6 +113,13 @@ input {
   background: var(--bg-primary);
 }
 
+/* Tall desktop: more air above the lockup so it isn't pinned to the top edge. */
+@media (min-width: 861px) and (min-height: 860px) {
+  .form-col {
+    padding-top: clamp(72px, 9vh, 112px);
+  }
+}
+
 #panel {
   flex: 1;
   min-height: 0;
@@ -401,6 +408,22 @@ input {
 
 .error {
   color: var(--critical);
+}
+
+/* Desktop: paint errors in the existing gap so fields don't shift when messages appear. */
+@media (min-width: 861px) {
+  .field {
+    position: relative;
+  }
+
+  .field > .error {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 8px);
+    margin: 0;
+    z-index: 1;
+  }
 }
 
 .select-wrap {
