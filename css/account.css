@@ -674,7 +674,8 @@ input {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
+  /* Prefer the engine (right side of the still) when the strip crops horizontally. */
+  object-position: 78% 48%;
 }
 
 @media (min-width: 1101px) {
@@ -689,14 +690,14 @@ input {
   }
 
   .scene {
-    /* Larger engine, shifted left in the panel; leave a little hangar for the fade. */
+    /* Pin the intake face; as the stage narrows, crop the engine body on the right. */
     inset: 0;
     width: 100%;
     height: 100%;
     transform: none;
     object-fit: cover;
-    object-position: 96% 52%;
-    object-view-box: inset(18% 0% 14% 44%);
+    object-position: 28% 52%;
+    object-view-box: inset(18% 0% 14% 48%);
   }
 }
 
