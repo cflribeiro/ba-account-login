@@ -820,7 +820,7 @@ input {
   }
 
   .stage {
-    flex: 0 0 96px;
+    flex: 0 0 112px;
     order: -1;
   }
 
@@ -837,22 +837,22 @@ input {
 
   .form-block {
     /* Keep lockup → Sign in from collapsing when error rows force --fit down. */
-    --mobile-content-min: 48px;
+    --mobile-content-min: 52px;
   }
 
   .field {
-    margin-top: calc(12px * var(--fit, 1));
+    margin-top: calc(16px * var(--fit, 1));
   }
 
   .field .error,
   .field .helper {
-    margin-top: 2px;
+    margin-top: 4px;
     font-size: 12px;
     line-height: 16px;
   }
 
   .btn.primary {
-    margin-top: calc(16px * var(--fit, 1));
+    margin-top: calc(20px * var(--fit, 1));
   }
 
   .actions {
