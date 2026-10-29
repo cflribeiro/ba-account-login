@@ -195,7 +195,9 @@ function submitCode() {
   }
   state.fieldErrors = {};
   state.codeStatus = "";
-  go("done");
+  state.code = "";
+  state.live = "Sign-in succeeded. This prototype stops before the portal.";
+  go("sign-in");
 }
 
 function dsIcon(paths, className) {
@@ -370,13 +372,6 @@ function timeoutHtml() {
     <p class="lede">Code expired. Request a new one by signing in again.</p>`;
 }
 
-function doneHtml() {
-  const network = selectedNetwork();
-  return `${backControl("Back to Login Page")}
-    <h1 class="headline">Signed in</h1>
-    <p class="lede">Signed in to ${esc(network.label)} at ${esc(network.origin)}. This prototype stops at the account shell. The portal itself is unchanged.</p>`;
-}
-
 function handoffHtml() {
   return `<article class="doc">
     <img class="doc-logo" src="assets/lockup-horizontal.svg" width="209" height="48" alt="Block Aero">
@@ -469,7 +464,6 @@ function screenBody() {
     case "email-code": return codeHtml("email");
     case "auth-code": return codeHtml("auth");
     case "timeout": return timeoutHtml();
-    case "done": return doneHtml();
     default: return signInHtml();
   }
 }
@@ -512,7 +506,6 @@ function render() {
     "email-code": "Check your email",
     "auth-code": "Authenticator code",
     timeout: "This link expired",
-    done: "Signed in",
     handoff: "Account sign-in",
   }[state.screen])} · Block Aero`;
 
@@ -619,7 +612,7 @@ function onClick(event) {
     state.fieldErrors = {};
     state.codeStatus = "";
     if (state.screen === "email-code" || state.screen === "auth-code") go("security");
-    else if (state.screen === "security" || state.screen === "forgot" || state.screen === "sent" || state.screen === "timeout" || state.screen === "done") go("sign-in");
+    else if (state.screen === "security" || state.screen === "forgot" || state.screen === "sent" || state.screen === "timeout") go("sign-in");
     else go("sign-in");
   }
   if (name === "verify-method") {
@@ -689,8 +682,7 @@ function applyReview(value) {
     state.screen = "auth-code";
     state.verifyMethod = "auth";
     state.email = state.email || "auth@block.aero";
-  } else if (value === "timeout") state.screen = "timeout";
-  else if (value === "done") state.screen = "done";
+  }   else if (value === "timeout") state.screen = "timeout";
   else if (value === "handoff") state.screen = "handoff";
   const hashScreen = state.screen;
   const next = `#/${hashScreen}`;
@@ -737,7 +729,7 @@ function onKey(event) {
 
 function readRoute() {
   const name = (location.hash || "#/sign-in").replace(/^#\//, "").split("?")[0];
-  const known = ["sign-in", "forgot", "sent", "security", "email-code", "auth-code", "timeout", "done", "handoff"];
+  const known = ["sign-in", "forgot", "sent", "security", "email-code", "auth-code", "timeout", "handoff"];
   state.screen = known.includes(name) ? name : "sign-in";
   state.dropdownOpen = false;
   render();
