@@ -1,7 +1,7 @@
 /* Block Aero account shell.
    Tokens from Supernova, design system Block Aero, shared draft.
    background-primary-default, color-accent-default, text-primary-default,
-   border-primary-default, Body/S, Heading/XL, button height 34, field block 76. */
+   border-primary-default, Body/S, Heading/XL, button height 40, field block 76. */
 
 :root {
   --bg-primary: #f2f4f8;
@@ -27,7 +27,7 @@
   --disabled-text: #565656;
   --radius: 0;
   --field-h: 48px;
-  --button-h: 34px;
+  --button-h: 40px;
   --form-w: 360px;
   --font: "Open Sans", "Segoe UI", sans-serif;
   --shadow: 0 8px 24px rgba(36, 42, 46, 0.12);
@@ -128,7 +128,8 @@ input {
 }
 
 .brand {
-  margin-bottom: calc(48px * var(--fit, 1));
+  flex: 0 0 auto;
+  margin-bottom: 0;
 }
 
 .form-scroll {
@@ -141,10 +142,6 @@ input {
 
 .form-scroll:has(.menu) {
   overflow: visible;
-}
-
-.account[data-host="custom"] .form-col {
-  box-shadow: inset 0 3px 0 var(--accent);
 }
 
 .brand img {
@@ -162,7 +159,10 @@ input {
 
 .form-block {
   width: min(var(--form-w), 100%);
-  margin-block: auto;
+  /* Vertical offset set in placeContent(): clamp(min gap, optical center, max gap). */
+  margin-top: calc(48px * var(--fit, 1));
+  margin-bottom: 0;
+  flex: 0 0 auto;
 }
 
 .headline {
@@ -289,7 +289,63 @@ input {
 .control[aria-invalid="true"]:hover,
 .select[aria-invalid="true"]:hover {
   border-color: var(--critical);
+  border-width: 2px;
+  color: var(--critical);
   box-shadow: none;
+}
+
+.radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: calc(32px * var(--fit, 1)) 0 calc(40px * var(--fit, 1));
+}
+
+.radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  cursor: pointer;
+  text-align: left;
+}
+
+.radio-mark {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  display: grid;
+  place-items: center;
+}
+
+.radio[aria-checked="true"] .radio-mark {
+  border-color: var(--accent);
+}
+
+.radio[aria-checked="true"] .radio-mark::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.radio:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .password-wrap {
@@ -404,7 +460,16 @@ input {
   color: var(--accent);
 }
 
+.option span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .option .check {
+  margin-left: auto;
   color: var(--accent);
 }
 
@@ -440,11 +505,15 @@ input {
 }
 
 .btn {
+  appearance: none;
+  -webkit-appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
   height: var(--button-h);
   min-height: var(--button-h);
+  max-height: var(--button-h);
   min-width: 96px;
   border: 0;
   border-radius: var(--radius);
@@ -458,6 +527,8 @@ input {
 .btn.primary {
   width: 100%;
   height: var(--button-h);
+  min-height: var(--button-h);
+  max-height: var(--button-h);
   margin-top: calc(48px * var(--fit, 1));
   background: var(--accent);
   color: #fff;
@@ -579,71 +650,6 @@ input {
   inset: 0;
   background: linear-gradient(90deg, var(--bg-primary), transparent 28%);
   pointer-events: none;
-}
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px 16px;
-  background: rgba(36, 42, 46, 0.45);
-}
-
-.dialog {
-  width: min(480px, 100%);
-  max-height: calc(100vh - 64px);
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-secondary);
-  border-radius: var(--radius);
-  box-shadow: 0 16px 40px rgba(36, 42, 46, 0.18);
-}
-
-.dialog:focus {
-  outline: none;
-}
-
-.dialog-h,
-.dialog-b {
-  padding: 32px 32px 0;
-}
-
-.dialog-b {
-  padding-top: 24px;
-  overflow: auto;
-}
-
-.dialog h2 {
-  margin: 0;
-  font-size: 24px;
-  line-height: 32px;
-  font-weight: 400;
-}
-
-.dialog .sub {
-  margin: 8px 0 0;
-  color: var(--text-secondary);
-}
-
-.dialog .field:first-child {
-  margin-top: 0;
-}
-
-.dialog-f {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 24px;
-  padding: 16px 32px 24px;
-  border-top: 1px solid var(--line);
-}
-
-.dialog-f .btn.primary {
-  width: auto;
-  margin-top: 0;
 }
 
 .doc {
@@ -773,8 +779,7 @@ input {
 }
 
 .control:focus-visible,
-.select:focus-visible,
-.dialog:focus-visible {
+.select:focus-visible {
   outline: none;
 }
 
