@@ -536,37 +536,46 @@ function render() {
   }
 }
 
+function contentMinGap(block) {
+  const mobileMin = Number.parseFloat(getComputedStyle(block).getPropertyValue("--mobile-content-min")) || 0;
+  return mobileMin || 48;
+}
+
 function fitForm() {
   const column = document.querySelector(".form-col");
   const scroll = document.querySelector(".form-scroll");
   const block = document.querySelector(".form-block");
   if (!column || !scroll || !block) return;
   column.style.setProperty("--fit", "1");
-  block.style.marginTop = "0px";
-  const fits = () => {
-    if (block.scrollHeight > scroll.clientHeight + 1) return false;
+  // Reserve logo→content gap while fitting so --fit shrinks field/button rhythm first.
+  const reserved = contentMinGap(block);
+  block.style.marginTop = `${reserved}px`;
+  const fitsWithGap = () => {
+    const mt = Number.parseFloat(block.style.marginTop) || 0;
+    if (block.offsetHeight + mt > scroll.clientHeight + 1) return false;
     const btn = block.querySelector(".btn.primary");
     if (!btn) return true;
     const br = btn.getBoundingClientRect();
     const sr = scroll.getBoundingClientRect();
     return br.bottom <= sr.bottom + 1 && br.top >= sr.top - 1;
   };
-  if (fits()) return;
-  let low = 0.5;
+  if (fitsWithGap()) return;
+  let low = 0.45;
   let high = 1;
   for (let step = 0; step < 10; step += 1) {
     const mid = (low + high) / 2;
     column.style.setProperty("--fit", String(mid));
-    if (fits()) low = mid;
+    block.style.marginTop = `${reserved}px`;
+    if (fitsWithGap()) low = mid;
     else high = mid;
   }
   column.style.setProperty("--fit", String(low));
+  block.style.marginTop = `${reserved}px`;
 }
 
 /** Keep brand top-pinned; ease content down on tall screens without mid-column float.
  *  margin-top = clamp(minGap, freeSpace / 2, maxGap)
- *  minGap ≈ logo rhythm (48); maxGap caps drift (~22vh, hard cap 200) so short copy
- *  stays in the upper band instead of true vertical center. */
+ *  minGap ≈ logo rhythm (48 desktop / --mobile-content-min); maxGap caps drift (~22vh, hard cap 200). */
 function placeContent() {
   const column = document.querySelector(".form-col");
   const scroll = document.querySelector(".form-scroll");
@@ -574,16 +583,24 @@ function placeContent() {
   if (!column || !scroll || !block) return;
 
   const fit = Number(column.style.getPropertyValue("--fit") || "1") || 1;
-  const mobileMin = Number.parseFloat(getComputedStyle(block).getPropertyValue("--mobile-content-min")) || 0;
-  const minGap = Math.round(Math.max(48, mobileMin) * fit);
+  const mobileMin = Number.parseFloat(
+    getComputedStyle(block).getPropertyValue("--mobile-content-min")
+  ) || 0;
+  // Mobile keeps a near-fixed floor so --fit doesn't pull Sign in into the lockup.
+  // Desktop scales the 48px rhythm with --fit.
+  const minGap = mobileMin
+    ? Math.round(Math.max(mobileMin * 0.9, mobileMin * Math.max(fit, 0.85)))
+    : Math.round(48 * fit);
   const maxGap = Math.round(Math.min(200, Math.max(minGap, window.innerHeight * 0.22)));
+
+  // Temporarily zero margin to measure free space for optical centering.
+  block.style.marginTop = "0px";
   const free = scroll.clientHeight - block.offsetHeight;
 
-  let top = 0;
-  if (free > 0) {
+  let top = Math.min(minGap, Math.max(0, free));
+  if (free > minGap) {
     const ideal = free / 2;
     top = Math.min(maxGap, Math.max(minGap, ideal));
-    top = Math.min(top, free);
   }
   block.style.marginTop = `${top}px`;
 }

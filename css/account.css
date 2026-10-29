@@ -820,7 +820,7 @@ input {
   }
 
   .stage {
-    flex: 0 0 120px;
+    flex: 0 0 96px;
     order: -1;
   }
 
@@ -832,12 +832,35 @@ input {
     flex: 1 1 auto;
     width: 100%;
     min-height: 0;
-    padding: 12px 24px 24px;
+    padding: 12px 24px 16px;
   }
 
   .form-block {
-    /* Extra air between lockup and Sign in on the stacked mobile layout. */
-    --mobile-content-min: 72px;
+    /* Keep lockup → Sign in from collapsing when error rows force --fit down. */
+    --mobile-content-min: 48px;
+  }
+
+  .field {
+    margin-top: calc(12px * var(--fit, 1));
+  }
+
+  .field .error,
+  .field .helper {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 16px;
+  }
+
+  .btn.primary {
+    margin-top: calc(16px * var(--fit, 1));
+  }
+
+  .actions {
+    margin-top: calc(8px * var(--fit, 1));
+  }
+
+  .radio-list {
+    margin: calc(20px * var(--fit, 1)) 0 calc(24px * var(--fit, 1));
   }
 
   body[data-screen="handoff"] .stage {
