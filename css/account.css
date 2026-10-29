@@ -820,7 +820,7 @@ input {
   }
 
   .stage {
-    flex: 0 0 112px;
+    flex: 0 0 148px;
     order: -1;
   }
 
@@ -841,7 +841,7 @@ input {
   }
 
   .field {
-    margin-top: calc(16px * var(--fit, 1));
+    margin-top: calc(20px * var(--fit, 1));
   }
 
   .field .error,
