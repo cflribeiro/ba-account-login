@@ -108,15 +108,17 @@ input {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: calc(48px * var(--fit, 1)) 32px calc(28px * var(--fit, 1)) 108px;
+  /* Bottom matches top so Need help / footer sit with the same air as the logo. */
+  padding: calc(48px * var(--fit, 1)) 32px calc(48px * var(--fit, 1)) 108px;
   overflow: hidden;
   background: var(--bg-primary);
 }
 
 /* Tall desktop: more air above the lockup so it isn't pinned to the top edge. */
-@media (min-width: 861px) and (min-height: 860px) {
+@media (min-width: 1101px) and (min-height: 860px) {
   .form-col {
     padding-top: clamp(72px, 9vh, 112px);
+    padding-bottom: clamp(72px, 9vh, 112px);
   }
 }
 
@@ -153,7 +155,8 @@ input {
 
 .brand img {
   display: block;
-  width: 226px;
+  /* Intrinsic lockup is flush-left; keep width so mark size matches prior art. */
+  width: 213px;
   max-width: 100%;
   height: auto;
 }
@@ -177,6 +180,10 @@ input {
   font-size: 32px;
   line-height: 40px;
   font-weight: 400;
+}
+
+.headline strong {
+  font-weight: 700;
 }
 
 .lede {
@@ -411,9 +418,11 @@ input {
 }
 
 /* Desktop: paint errors in the existing gap so fields don't shift when messages appear. */
-@media (min-width: 861px) {
+@media (min-width: 1101px) {
   .field {
     position: relative;
+    /* Extra room under controls so overlay errors clear the next label. */
+    margin-top: calc(40px * var(--fit, 1));
   }
 
   .field > .error {
@@ -654,7 +663,8 @@ input {
   position: relative;
   flex: 1;
   min-width: 0;
-  background: #e7ecf1;
+  /* Match form so the column seam doesn't flash a different fill. */
+  background: var(--bg-primary);
   overflow: hidden;
 }
 
@@ -667,11 +677,43 @@ input {
   object-position: center;
 }
 
+@media (min-width: 1101px) {
+  .form-col {
+    position: relative;
+    z-index: 1;
+  }
+
+  .stage {
+    /* Tuck under the form a hair to kill the vertical seam. */
+    margin-left: -2px;
+  }
+
+  .scene {
+    /* Larger engine, shifted left in the panel; leave a little hangar for the fade. */
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+    object-fit: cover;
+    object-position: 96% 52%;
+    object-view-box: inset(18% 0% 14% 44%);
+  }
+}
+
 .stage::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, var(--bg-primary), transparent 28%);
+  /* Soft seam into the photo — solid hold then a mid-length fade. */
+  background: linear-gradient(
+    90deg,
+    var(--bg-primary) 0%,
+    var(--bg-primary) 5%,
+    color-mix(in srgb, var(--bg-primary) 85%, transparent) 14%,
+    color-mix(in srgb, var(--bg-primary) 55%, transparent) 26%,
+    color-mix(in srgb, var(--bg-primary) 25%, transparent) 38%,
+    transparent 52%
+  );
   pointer-events: none;
 }
 
@@ -682,7 +724,7 @@ input {
 
 .doc-logo {
   display: block;
-  width: 226px;
+  width: 213px;
   max-width: 100%;
   height: auto;
   margin-bottom: 24px;
@@ -837,7 +879,8 @@ input {
   outline: none;
 }
 
-@media (max-width: 860px) {
+/* Stack earlier so the side photo never gets crushed on mid widths. */
+@media (max-width: 1100px) {
   .account {
     flex-direction: column;
   }
@@ -848,7 +891,15 @@ input {
   }
 
   .stage::after {
-    background: linear-gradient(transparent 25%, var(--bg-primary));
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      transparent 28%,
+      color-mix(in srgb, var(--bg-primary) 20%, transparent) 48%,
+      color-mix(in srgb, var(--bg-primary) 55%, transparent) 68%,
+      color-mix(in srgb, var(--bg-primary) 88%, transparent) 86%,
+      var(--bg-primary) 100%
+    );
   }
 
   .form-col {
@@ -860,7 +911,7 @@ input {
 
   .form-block {
     /* Keep lockup → content tight on mobile; floor so errors don't crush the gap. */
-    --mobile-content-min: 28px;
+    --mobile-content-min: 40px;
   }
 
   .field {

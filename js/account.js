@@ -258,10 +258,10 @@ function networkField() {
 function productShell(body) {
   const support = state.screen === "sign-in"
     ? ""
-    : `<p class="support">Need help? <a href="mailto:support@block.aero">support@block.aero</a></p>`;
+    : `<p class="support">Need help? <a href="mailto:support@block.aero">Contact customer support</a></p>`;
   return `<div class="shell">
     <div class="brand">
-      <img src="assets/lockup-horizontal.svg" width="209" height="48" alt="Block Aero">
+      <img src="assets/lockup-horizontal.svg?v=2" width="197" height="48" alt="Block Aero">
       <p class="tagline">A digital passport for every aero asset</p>
     </div>
     <div class="form-scroll">
@@ -276,7 +276,7 @@ function productShell(body) {
 function signInHtml() {
   const emailErr = state.fieldErrors.email;
   const passErr = state.fieldErrors.password;
-  return `<h1 class="headline">Sign in</h1>
+  return `<h1 class="headline">Sign In</h1>
     <form id="signin-form" novalidate>
       ${networkField()}
       <div class="field">
@@ -287,7 +287,7 @@ function signInHtml() {
       <div class="field">
         <div class="field-label">
           <label for="password">Password</label>
-          <button type="button" class="inline-link" data-action="forgot">Forgot password?</button>
+          <button type="button" class="inline-link" data-action="forgot">Forgot Password?</button>
         </div>
         <div class="password-wrap">
           <input class="control" id="password" name="password" type="${state.showPassword ? "text" : "password"}" autocomplete="current-password" placeholder="Enter password" value="${esc(state.password)}" ${passErr ? `aria-invalid="true" aria-describedby="password-error"` : ""}>
@@ -295,9 +295,9 @@ function signInHtml() {
         </div>
         ${fieldError("password")}
       </div>
-      <button class="btn primary" type="submit">Sign in</button>
+      <button class="btn primary" type="submit">Sign In</button>
     </form>
-    <p class="actions quiet">New to Block Aero? <a href="https://block.aero/get-started#request" target="_blank" rel="noopener noreferrer">Get started</a></p>`;
+    <p class="actions quiet">Don’t have an account? <a href="https://block.aero/get-started#request" target="_blank" rel="noopener noreferrer">Get started</a></p>`;
 }
 
 function securityHtml() {
@@ -323,15 +323,15 @@ function securityHtml() {
 function forgotHtml() {
   const err = state.fieldErrors.forgotEmail;
   return `${backControl("Back to Login Page")}
-    <h1 class="headline">Forgot password</h1>
-    <p class="lede">Enter the work email for your account. A reset link is sent from this network.</p>
+    <h1 class="headline">Reset Password</h1>
+    <p class="lede">Please provide your work email address and we will email you instructions to reset your password</p>
     <form id="forgot-form" novalidate>
       <div class="field">
         <div class="field-label"><label for="forgot-email">Work Email Address</label></div>
         <input class="control" id="forgot-email" type="email" autocomplete="username" placeholder="Enter work email address" value="${esc(state.forgotEmail)}" ${err ? `aria-invalid="true" aria-describedby="forgotEmail-error"` : ""}>
         ${fieldError("forgotEmail")}
       </div>
-      <button class="btn primary" type="submit">Send reset link</button>
+      <button class="btn primary" type="submit">Send Reset Link</button>
     </form>`;
 }
 
@@ -374,17 +374,17 @@ function timeoutHtml() {
 
 function handoffHtml() {
   return `<article class="doc">
-    <img class="doc-logo" src="assets/lockup-horizontal.svg" width="209" height="48" alt="Block Aero">
+    <img class="doc-logo" src="assets/lockup-horizontal.svg?v=2" width="197" height="48" alt="Block Aero">
     <h1>Account sign-in</h1>
     <p>The release puts the new lockup, the tagline, and a network choice on the account shell that already exists. The button, fields, dialogs, type, and color roles stay the ones in the design system. The other account screens that share this layout come with it.</p>
 
     <h2>What ships</h2>
     <ul>
-      <li>Lockup at 226px wide, intrinsic height, above the tagline. Headline is Sign in.</li>
+      <li>Lockup at 213px wide, intrinsic height, above the tagline. Headline is Sign In.</li>
       <li>Tagline, once: A digital passport for every aero asset</li>
       <li>Side photograph is the engine hangar still. The other two stills are not on the page yet.</li>
       <li>Network choice on the sign-in form, using the dropdown field.</li>
-      <li>Forgot password, reset email, security verification method choice, email code, authenticator code, invalid code, expired code, and expired link.</li>
+      <li>Reset Password, reset email, security verification method choice, email code, authenticator code, invalid code, expired code, and expired link.</li>
       <li>Incorrect credentials show field errors on email and password, not a page banner.</li>
     </ul>
 
@@ -396,16 +396,16 @@ function handoffHtml() {
       <li>Type is Open Sans. Body is 14/20. The page title is 32/40. Dialog titles are 24/32.</li>
       <li>Fields are the text, password, and dropdown fields.</li>
       <li>Errors follow the writing pattern: what went wrong, then what to do.</li>
-      <li>Get started still opens https://block.aero/get-started#request. Support is still support@block.aero.</li>
+      <li>Get started still opens https://block.aero/get-started#request. Support is Contact customer support (mailto support@block.aero).</li>
     </ul>
 
     <h2>How a network change works</h2>
     <ul>
       <li>This page never signs a person in against another host. No password, code, or token is added to the address.</li>
       <li>Production opens https://portal.block.aero/account/login. Sandbox opens https://sandbox.portal.block.aero/account/login.</li>
-      <li>Choosing the network you are already on stays on this page. Sign in submits on this host.</li>
+      <li>Choosing the network you are already on stays on this page. Sign In submits on this host.</li>
       <li>Choosing another network opens that host’s sign-in address in this window. There is no confirmation. Email, password, and code are cleared and are not added to the address.</li>
-      <li>The button stays Sign in. Sign-in always happens on the host shown in the address.</li>
+      <li>The button stays Sign In. Sign-in always happens on the host shown in the address.</li>
     </ul>
 
     <h2>Networks</h2>
@@ -426,11 +426,11 @@ function handoffHtml() {
     <p>The chips below show the design-system color and the proposed color together. Layout, type, and behavior stay on the design system.</p>
     <div class="swatches">
       <div class="swatch">
-        <button type="button" class="btn primary" style="background:#286AD3">Sign in</button>
+        <button type="button" class="btn primary" style="background:#286AD3">Sign In</button>
         <p>Design system · #286AD3</p>
       </div>
       <div class="swatch">
-        <button type="button" class="btn primary" style="background:#1C5FC0">Sign in</button>
+        <button type="button" class="btn primary" style="background:#1C5FC0">Sign In</button>
         <p>Proposed · #1C5FC0</p>
       </div>
       <div class="swatch">
@@ -506,8 +506,8 @@ function render() {
   document.documentElement.dataset.palette = state.palette;
   document.getElementById("account").dataset.host = state.host;
   document.title = `${({
-    "sign-in": "Sign in",
-    forgot: "Forgot password",
+    "sign-in": "Sign In",
+    forgot: "Reset Password",
     sent: "Check your email",
     security: "Security Verification",
     "email-code": "Check your email",
