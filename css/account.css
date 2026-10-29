@@ -841,7 +841,7 @@ input {
   }
 
   .field {
-    margin-top: calc(20px * var(--fit, 1));
+    margin-top: calc(24px * var(--fit, 1));
   }
 
   .field .error,
