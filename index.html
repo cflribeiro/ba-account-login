@@ -8,10 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/account.css?v=110">
+    <link rel="stylesheet" href="css/account.css?v=124">
   </head>
   <body>
-    <a class="skip" href="#panel">Skip to sign in</a>
+    <a class="skip" href="#panel">Skip to Sign In</a>
     <div id="live" class="sr-only" aria-live="polite"></div>
     <div class="account" id="account" data-host="production">
       <div class="form-col">
@@ -35,15 +35,24 @@
         <button type="button" role="option" data-screen="sign-in-error">Sign In, incorrect credentials</button>
         <button type="button" role="option" data-screen="forgot">Reset Password</button>
         <button type="button" role="option" data-screen="sent">Reset email sent</button>
+        <button type="button" role="option" data-screen="set-password">Set new password</button>
+        <button type="button" role="option" data-screen="set-password-focus">Set password, focus</button>
+        <button type="button" role="option" data-screen="set-password-weak">Set password, weak</button>
+        <button type="button" role="option" data-screen="set-password-ok">Set password, ok</button>
+        <button type="button" role="option" data-screen="set-password-strong">Set password, strong</button>
+        <button type="button" role="option" data-screen="set-password-error">Set password, error</button>
+        <button type="button" role="option" data-screen="set-password-error-focus">Set password, error + panel</button>
         <button type="button" role="option" data-screen="security">Security verification</button>
         <button type="button" role="option" data-screen="email-code">Email code</button>
         <button type="button" role="option" data-screen="email-code-invalid">Email code, invalid</button>
         <button type="button" role="option" data-screen="email-code-expired">Email code, expired</button>
+        <button type="button" role="option" data-screen="email-code-timeout">Email code, timeout</button>
         <button type="button" role="option" data-screen="auth-code">Authenticator</button>
-        <button type="button" role="option" data-screen="timeout">Link expired</button>
+        <button type="button" role="option" data-screen="auth-code-invalid">Authenticator, invalid</button>
+        <button type="button" role="option" data-screen="timeout">Reset link expired</button>
         <button type="button" role="option" data-screen="handoff">Handoff</button>
       </div>
     </div>
-    <script src="js/account.js?v=108"></script>
+    <script src="js/account.js?v=124"></script>
   </body>
 </html>

@@ -18,6 +18,9 @@
   --critical-dark: #7b0016;
   --critical-bg: #fbf2f4;
   --critical-ring: #f7e6e9;
+  --success: #0da560;
+  --success-bg: #f3fbf7;
+  --success-border: #86d2b0;
   --warning: #ff9a3e;
   --warning-dark: #b36c2b;
   --warning-bg: #fff5ec;
@@ -28,7 +31,7 @@
   --radius: 0;
   --field-h: 48px;
   --button-h: 40px;
-  --form-w: 360px;
+  --form-w: 420px;
   --font: "Open Sans", "Segoe UI", sans-serif;
   --shadow: 0 8px 24px rgba(36, 42, 46, 0.12);
 }
@@ -197,6 +200,11 @@ input {
 .lede {
   margin: 8px 0 0;
   color: var(--text-secondary);
+}
+
+.lede strong {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .banner {
@@ -378,6 +386,118 @@ input {
   padding-right: 48px;
 }
 
+.pw-panel {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 100%;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-sizing: border-box;
+}
+
+.pw-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pw-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.pw-rule .rule-icon {
+  flex: 0 0 16px;
+  color: var(--text-secondary);
+}
+
+.pw-rule.is-met .rule-icon,
+.pw-rule .rule-icon.is-met {
+  color: var(--success);
+}
+
+.pw-rule.is-fail .rule-icon,
+.pw-rule .rule-icon.is-fail {
+  color: var(--critical);
+}
+
+.pw-strength {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  min-height: 16px;
+}
+
+.pw-strength-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.pw-strength-copy span {
+  color: var(--text-secondary);
+}
+
+.pw-strength-copy strong {
+  font-weight: 400;
+}
+
+.pw-strength[data-tone="weak"] .pw-strength-copy strong,
+.pw-strength[data-tone="weak"] .pw-bar.is-on {
+  color: var(--critical);
+}
+
+.pw-strength[data-tone="weak"] .pw-bar.is-on {
+  background: var(--critical);
+}
+
+.pw-strength[data-tone="ok"] .pw-strength-copy strong,
+.pw-strength[data-tone="ok"] .pw-bar.is-on {
+  color: var(--warning);
+}
+
+.pw-strength[data-tone="ok"] .pw-bar.is-on {
+  background: var(--warning);
+}
+
+.pw-strength[data-tone="strong"] .pw-strength-copy strong,
+.pw-strength[data-tone="strong"] .pw-bar.is-on {
+  color: var(--success);
+}
+
+.pw-strength[data-tone="strong"] .pw-bar.is-on {
+  background: var(--success);
+}
+
+.pw-strength-bars {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.pw-bar {
+  width: 30px;
+  height: 2px;
+  background: var(--line);
+}
+
 .icon-btn {
   position: absolute;
   top: 0;
@@ -429,17 +549,28 @@ input {
 @media (min-width: 1101px) {
   .field {
     position: relative;
-    /* Keep fields tighter; still enough air for overlay errors above the next label. */
-    margin-top: calc(28px * var(--fit, 1));
+    /* Room for 14px DS error text without sitting on the next label. */
+    margin-top: calc(36px * var(--fit, 1));
   }
 
   .field > .error {
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(100% + 6px);
+    top: calc(100% + 4px);
     margin: 0;
     z-index: 1;
+  }
+
+  /* Keep set-password errors in flow so the requirements panel does not collide. */
+  .field.pw-field > .error {
+    position: static;
+    margin-top: 8px;
+  }
+
+  .field.pw-field:has(.pw-panel) + .btn.primary,
+  .field.pw-field:has(.error) + .btn.primary {
+    margin-top: calc(24px * var(--fit, 1));
   }
 }
 
@@ -569,7 +700,8 @@ input {
   height: var(--button-h);
   min-height: var(--button-h);
   max-height: var(--button-h);
-  margin-top: calc(32px * var(--fit, 1));
+  /* Match desktop field gap so overlay errors clear Send / Verify / Sign In. */
+  margin-top: calc(36px * var(--fit, 1));
   background: var(--accent);
   color: #fff;
   border: 0;
@@ -580,13 +712,156 @@ input {
 }
 
 .btn.secondary {
+  width: 100%;
+  height: var(--button-h);
+  min-height: var(--button-h);
+  margin-top: 12px;
   background: var(--bg-secondary);
-  color: var(--text);
-  border: 1px solid var(--line);
+  color: var(--accent);
+  border: 1px solid var(--accent);
 }
 
-.btn.secondary:hover {
-  background: var(--bg-primary);
+.btn.secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-secondary));
+}
+
+.btn.secondary:disabled,
+.btn.secondary.is-countdown {
+  color: var(--disabled-bg);
+  border-color: var(--disabled-bg);
+  background: transparent;
+  cursor: not-allowed;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.check-label {
+  color: var(--text-secondary);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 20px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.check-mark {
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 2px;
+  background: var(--bg-secondary);
+  display: grid;
+  place-items: center;
+}
+
+.check[aria-checked="true"] .check-mark {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.check[aria-checked="true"] .check-mark::after {
+  content: "";
+  width: 8px;
+  height: 4px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: rotate(-45deg) translate(1px, -1px);
+}
+
+.check:focus-visible,
+.info-tip-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.info-tip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.info-tip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.info-tip:hover,
+.info-tip:focus-visible,
+.info-tip[aria-expanded="true"] {
+  color: var(--accent);
+}
+
+.tooltip {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 10px);
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: 240px;
+  padding: 8px 16px;
+  border: 1px solid #b9bfc7;
+  border-radius: 0;
+  background: #50565b;
+  color: #fff;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+  text-align: left;
+  z-index: 8;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease, visibility 0.12s ease;
+}
+
+.tooltip::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -8px;
+  width: 32px;
+  height: 9px;
+  margin-left: -16px;
+  background: url("../assets/icons/tooltip-arrow.svg") no-repeat center / 32px 9px;
+  transform: rotate(180deg);
+}
+
+.tooltip.is-open,
+.info-tip-wrap:hover .tooltip,
+.info-tip-wrap:focus-within .tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.code-timeout-hint {
+  margin-top: 8px;
 }
 
 .btn:disabled {
@@ -802,6 +1077,36 @@ input {
   line-height: 16px;
 }
 
+.toast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  width: min(368px, calc(100vw - 48px));
+  padding: 14px 16px;
+  border: 1px solid var(--success-border);
+  background: var(--success-bg);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.toast .rule-icon {
+  flex: 0 0 16px;
+  margin-top: 2px;
+  color: var(--success);
+}
+
+.toast p {
+  margin: 0;
+  flex: 1;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
 .review {
   position: fixed;
   top: 16px;
@@ -843,8 +1148,8 @@ input {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  min-width: 240px;
-  max-height: min(70vh, 420px);
+  min-width: 260px;
+  max-height: min(80vh, 560px);
   overflow: auto;
   padding: 4px 0;
   background: #fff;

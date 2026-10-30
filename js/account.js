@@ -28,12 +28,29 @@ const state = {
   banner: "",
   codeStatus: "",
   resendIn: 0,
+  rememberBrowser: true,
+  rememberTipOpen: false,
+  codeEntryFrom: "security",
+  toast: "",
+  toastTimer: 0,
+  newPassword: "",
+  showNewPassword: false,
+  passwordPanelOpen: false,
+  passwordHadError: false,
   dropdownOpen: false,
   palette: "ds",
   live: "",
   focusId: null,
   restore: null,
 };
+
+const PASSWORD_RULES = [
+  { id: "length", label: "8 characters minimum", test: (v) => v.length >= 8 },
+  { id: "number", label: "At least 1 number", test: (v) => /\d/.test(v) },
+  { id: "lower", label: "At least 1 lowercase letter", test: (v) => /[a-z]/.test(v) },
+  { id: "upper", label: "At least 1 uppercase letter", test: (v) => /[A-Z]/.test(v) },
+  { id: "special", label: "At least 1 special character", test: (v) => /[^A-Za-z0-9]/.test(v) },
+];
 
 function esc(value) {
   return String(value).replace(/[&<>"']/g, (ch) => ({
@@ -140,14 +157,53 @@ function submitSignIn() {
   state.codeStatus = "";
   state.fieldErrors = {};
   state.verifyMethod = email.toLowerCase().includes("auth@") ? "auth" : "email";
+  // Email-only 2FA: send code and go straight to entry (Figma A205).
+  if (state.verifyMethod === "email") {
+    enterEmailCode({ from: "sign-in", announce: true });
+    return;
+  }
   go("security");
+}
+
+function showToast(message) {
+  state.toast = message;
+  state.toastTimer += 1;
+  const token = state.toastTimer;
+  window.setTimeout(() => {
+    if (state.toastTimer !== token) return;
+    state.toast = "";
+    render();
+  }, 4000);
+}
+
+function enterEmailCode({ from, announce }) {
+  state.verifyMethod = "email";
+  state.screen = "email-code";
+  state.codeEntryFrom = from;
+  state.code = "";
+  state.codeStatus = "";
+  state.fieldErrors = {};
+  state.resendIn = 60;
+  state.rememberBrowser = true;
+  state.focusId = "code";
+  if (announce) {
+    showToast("Verification email sent successfully.");
+    state.live = "Verification email sent successfully.";
+  }
+  setHash("email-code");
+  render();
 }
 
 function submitSecurity() {
   state.fieldErrors = {};
   state.code = "";
   state.codeStatus = "";
-  go(state.verifyMethod === "auth" ? "auth-code" : "email-code");
+  if (state.verifyMethod === "auth") {
+    state.codeEntryFrom = "security";
+    go("auth-code");
+    return;
+  }
+  enterEmailCode({ from: "security", announce: true });
 }
 
 function submitForgot() {
@@ -167,6 +223,34 @@ function submitForgot() {
   go("sent");
 }
 
+function submitSetPassword() {
+  const value = state.newPassword;
+  if (!value) {
+    state.fieldErrors = { newPassword: "Required" };
+    state.passwordHadError = true;
+    state.passwordPanelOpen = false;
+    state.focusId = "new-password";
+    render();
+    return;
+  }
+  const { allMet } = passwordAnalysis(value);
+  if (!allMet) {
+    state.fieldErrors = { newPassword: "Password does not meet the requirements" };
+    state.passwordHadError = true;
+    state.passwordPanelOpen = false;
+    state.focusId = "new-password";
+    render();
+    return;
+  }
+  state.fieldErrors = {};
+  state.passwordHadError = false;
+  state.passwordPanelOpen = false;
+  state.newPassword = "";
+  state.showNewPassword = false;
+  state.live = "Password changed. Sign in with your new password.";
+  go("sign-in");
+}
+
 function submitCode() {
   const code = state.code.trim();
   if (!code) {
@@ -182,15 +266,22 @@ function submitCode() {
     return;
   }
   if (code === "000000") {
-    state.fieldErrors = { code: "Invalid code. Check the code and try again." };
+    state.fieldErrors = {
+      code: state.screen === "auth-code"
+        ? "Invalid code"
+        : "Invalid code. Check the code and try again.",
+    };
     state.codeStatus = "invalid";
     render();
     return;
   }
   if (code === "111111") {
-    state.fieldErrors = { code: "Code expired. Request a new one." };
+    state.fieldErrors = { code: "Code expired. Please request a new one." };
     state.codeStatus = "expired";
     render();
+    return;
+  }
+  if (state.codeStatus === "expired" || state.codeStatus === "timeout") {
     return;
   }
   state.fieldErrors = {};
@@ -222,6 +313,63 @@ function iconCheck() {
 
 function iconArrowLeft() {
   return dsIcon(`<path fill="currentColor" d="M10.2733 11.06L7.21998 8L10.2733 4.94L9.33331 4L5.33331 8L9.33331 12L10.2733 11.06Z"/>`);
+}
+
+function iconInfo() {
+  return dsIcon(`<path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M8 1C4.136 1 1 4.136 1 8C1 11.864 4.136 15 8 15C11.864 15 15 11.864 15 8C15 4.136 11.864 1 8 1ZM8.5 7V11H7.5V7H8.5ZM8.5 6V5H7.5V6H8.5Z"/>`);
+}
+
+function iconRuleInfo() {
+  return dsIcon(`<path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M8 1C4.136 1 1 4.136 1 8C1 11.864 4.136 15 8 15C11.864 15 15 11.864 15 8C15 4.136 11.864 1 8 1ZM8.5 7V11H7.5V7H8.5ZM8.5 6V5H7.5V6H8.5Z"/>`, "rule-icon");
+}
+
+function iconRuleCheck() {
+  return dsIcon(`<path fill="currentColor" d="M8 1.6C4.472 1.6 1.6 4.472 1.6 8s2.872 6.4 6.4 6.4 6.4-2.872 6.4-6.4S11.528 1.6 8 1.6Zm-0.85 8.8L4.883 8.15l.85-.85L7.15 8.7l3.117-3.1.85.85L7.15 10.4Z"/>`, "rule-icon is-met");
+}
+
+function iconRuleError() {
+  return dsIcon(`<path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M8 1C4.136 1 1 4.136 1 8C1 11.864 4.136 15 8 15C11.864 15 15 11.864 15 8C15 4.136 11.864 1 8 1ZM8.5 4.5V9.5H7.5V4.5H8.5ZM8.5 11.5V10.5H7.5V11.5H8.5Z"/>`, "rule-icon is-fail");
+}
+
+function passwordAnalysis(value) {
+  const rules = PASSWORD_RULES.map((rule) => ({
+    id: rule.id,
+    label: rule.label,
+    met: rule.test(value),
+  }));
+  const metCount = rules.filter((rule) => rule.met).length;
+  let strength = { label: "Weak", level: 1, tone: "weak" };
+  if (metCount >= 5) strength = { label: "Strong", level: 3, tone: "strong" };
+  else if (metCount >= 3) strength = { label: "Ok", level: 2, tone: "ok" };
+  return { rules, metCount, allMet: metCount === rules.length, strength };
+}
+
+function passwordPanelHtml(value, { showFailIcons }) {
+  const { rules, strength } = passwordAnalysis(value);
+  const showStrength = value.length > 0;
+  const rows = rules.map((rule) => {
+    let icon = iconRuleInfo();
+    if (rule.met) icon = iconRuleCheck();
+    else if (showFailIcons) icon = iconRuleError();
+    return `<div class="pw-rule${rule.met ? " is-met" : ""}${!rule.met && showFailIcons ? " is-fail" : ""}">${icon}<span>${esc(rule.label)}</span></div>`;
+  }).join("");
+  const strengthRow = showStrength
+    ? `<div class="pw-strength" data-tone="${strength.tone}">
+        <div class="pw-strength-copy">
+          <span>Password Strength:</span>
+          <strong>${esc(strength.label)}</strong>
+        </div>
+        <div class="pw-strength-bars" aria-hidden="true">
+          <span class="pw-bar${strength.level >= 1 ? " is-on" : ""}"></span>
+          <span class="pw-bar${strength.level >= 2 ? " is-on" : ""}"></span>
+          <span class="pw-bar${strength.level >= 3 ? " is-on" : ""}"></span>
+        </div>
+      </div>`
+    : "";
+  return `<div class="pw-panel" id="pw-requirements" role="status" aria-live="polite">
+      <div class="pw-rules">${rows}</div>
+      ${strengthRow}
+    </div>`;
 }
 
 function backControl(label) {
@@ -258,7 +406,7 @@ function networkField() {
 function productShell(body) {
   const support = state.screen === "sign-in"
     ? ""
-    : `<p class="support">Need help? <a href="mailto:support@block.aero">Contact customer support</a></p>`;
+    : `<p class="support">Need help? <a href="mailto:support@block.aero">Contact Customer Support</a></p>`;
   return `<div class="shell">
     <div class="brand">
       <img src="assets/lockup-horizontal.svg?v=2" width="197" height="48" alt="Block Aero">
@@ -297,7 +445,7 @@ function signInHtml() {
       </div>
       <button class="btn primary" type="submit">Sign In</button>
     </form>
-    <p class="actions quiet">Don’t have an account? <a href="https://block.aero/get-started#request" target="_blank" rel="noopener noreferrer">Get started</a></p>`;
+    <p class="actions quiet">Don’t have an account? <a href="https://block.aero/get-started#request" target="_blank" rel="noopener noreferrer">Get Started</a></p>`;
 }
 
 function securityHtml() {
@@ -322,7 +470,7 @@ function securityHtml() {
 
 function forgotHtml() {
   const err = state.fieldErrors.forgotEmail;
-  return `${backControl("Back to Login Page")}
+  return `${backControl("Back to Sign In")}
     <h1 class="headline">Reset Password</h1>
     <p class="lede">Please provide your work email address and we will email you instructions to reset your password</p>
     <form id="forgot-form" novalidate>
@@ -336,40 +484,108 @@ function forgotHtml() {
 }
 
 function sentHtml() {
-  return `${backControl("Back to Login Page")}
-    <h1 class="headline">Check your email</h1>
-    <p class="lede">If an account exists for ${esc(state.sentEmail || "that address")}, a reset link is on its way. The link expires in 30 minutes.</p>`;
+  const email = state.sentEmail || "that address";
+  return `${backControl("Back to Sign In")}
+    <h1 class="headline">Reset Link has been sent</h1>
+    <p class="lede">We have sent an email to <strong>${esc(email)}</strong> containing instructions to reset account password.</p>
+    <p class="lede">Please check your spam folder if you do not receive our email from member@block.aero.</p>
+    <p class="lede">Wrong email? <button type="button" class="inline-link" data-action="reenter-email">Please Re-enter Your Email Address</button></p>`;
+}
+
+function setPasswordHtml() {
+  const err = state.fieldErrors.newPassword;
+  const showFailIcons = state.passwordHadError && state.passwordPanelOpen;
+  const invalid = Boolean(err);
+  return `${backControl("Back to Sign In")}
+    <h1 class="headline">Reset Password</h1>
+    <p class="lede">Please enter your new password</p>
+    <form id="set-password-form" novalidate>
+      <div class="field pw-field">
+        <div class="field-label"><label for="new-password">New Password</label></div>
+        <div class="password-wrap">
+          <input class="control" id="new-password" name="new-password" type="${state.showNewPassword ? "text" : "password"}" autocomplete="new-password" placeholder="Enter new password" value="${esc(state.newPassword)}" ${invalid ? `aria-invalid="true" aria-describedby="newPassword-error"` : ""} aria-controls="pw-requirements" aria-expanded="${state.passwordPanelOpen}">
+          <button type="button" class="icon-btn" data-action="toggle-new-password" aria-label="${state.showNewPassword ? "Hide password" : "Show password"}">${iconEye(!state.showNewPassword)}</button>
+        </div>
+        ${fieldError("newPassword")}
+        ${state.passwordPanelOpen ? passwordPanelHtml(state.newPassword, { showFailIcons }) : ""}
+      </div>
+      <button class="btn primary" type="submit">Change Password</button>
+    </form>`;
+}
+
+function rememberBrowserHtml() {
+  return `<div class="check-row">
+      <button type="button" class="check" role="checkbox" id="remember-browser" aria-checked="${state.rememberBrowser}" data-action="toggle-remember">
+        <span class="check-mark" aria-hidden="true"></span>
+        <span class="check-label">Remember this browser for 7 days</span>
+      </button>
+      <span class="info-tip-wrap">
+        <button type="button" class="info-tip" id="remember-info" data-action="remember-info" aria-label="About remembering this browser" aria-describedby="remember-tip" aria-expanded="${state.rememberTipOpen}">${iconInfo()}</button>
+        <span class="tooltip${state.rememberTipOpen ? " is-open" : ""}" id="remember-tip" role="tooltip">If the browser blocks or clears cookies, this feature may not work.</span>
+      </span>
+    </div>`;
+}
+
+function toastHtml() {
+  if (!state.toast) return "";
+  return `<div class="toast success" role="status" aria-live="polite">
+      ${iconRuleCheck()}
+      <p>${esc(state.toast)}</p>
+    </div>`;
+}
+
+function emailResendButton() {
+  const counting = state.resendIn > 0;
+  const label = counting ? `${state.resendIn}s to Enter Code` : "Resend Code";
+  return `<button type="button" class="btn secondary${counting ? " is-countdown" : ""}" id="resend" data-action="resend" ${counting ? "disabled" : ""}>${esc(label)}</button>`;
 }
 
 function codeHtml(kind) {
   const err = state.fieldErrors.code;
-  const title = kind === "auth" ? "Authenticator code" : "Check your email";
-  const lede = kind === "auth"
-    ? "Enter the 6-digit code from your authenticator app."
-    : `A 6-digit code was sent to ${esc(state.email || "your email")}. It expires in 10 minutes.`;
-  const sent = state.codeStatus === "sent" ? `<p class="helper" role="status">Code sent.</p>` : "";
-  const resendLabel = state.resendIn > 0 ? `Resend code in ${state.resendIn}s` : "Resend code";
-  return `${backControl("Back")}
+  const expired = state.codeStatus === "expired";
+  const timedOut = state.codeStatus === "timeout";
+  const invalid = state.codeStatus === "invalid";
+  const auth = kind === "auth";
+  const title = "Security Verification";
+  const lede = auth
+    ? "Please enter the 6 digit code from Google Authenticator"
+    : "Please enter the verification code sent to your email";
+  const label = auth ? "Google Verification Code" : "Verification Code";
+  const placeholder = timedOut ? "Verification timeout, resend verification" : "Enter";
+  const inputValue = timedOut ? "" : esc(state.code);
+  const inputDisabled = timedOut ? "disabled" : "";
+  const submitDisabled = expired || timedOut ? "disabled" : "";
+  const backLabel = timedOut || state.codeEntryFrom === "sign-in" ? "Back to Sign In" : "Back";
+  const requestNew = expired
+    ? `<button type="button" class="btn secondary" data-action="request-new-code" id="request-new-code">Request New Code</button>`
+    : "";
+  const resendControl = !auth && !expired
+    ? (timedOut
+      ? `<button type="button" class="btn secondary" id="resend" data-action="resend">Resend Verification Email</button>`
+      : emailResendButton())
+    : "";
+
+  return `${backControl(backLabel)}
     <h1 class="headline">${title}</h1>
     <p class="lede">${lede}</p>
     <form id="code-form" novalidate>
       <div class="field">
-        <div class="field-label"><label for="code">Verification code</label></div>
-        <input class="control" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" value="${esc(state.code)}" ${err ? `aria-invalid="true" aria-describedby="code-error"` : ""}>
+        <div class="field-label"><label for="code">${label}</label></div>
+        <input class="control" id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="${esc(placeholder)}" value="${inputValue}" ${inputDisabled} ${err || invalid || expired ? `aria-invalid="true" aria-describedby="code-error"` : ""}>
         ${fieldError("code")}
-        ${sent}
       </div>
-      <button class="btn primary" type="submit">Verify</button>
-    </form>
-    <p class="actions">
-      <button type="button" class="linkish" id="resend" data-action="resend" ${state.resendIn > 0 ? "disabled" : ""}>${resendLabel}</button>
-    </p>`;
+      <button class="btn primary" type="submit" ${submitDisabled}>Submit</button>
+      ${requestNew}
+      ${resendControl}
+      ${rememberBrowserHtml()}
+    </form>`;
 }
 
 function timeoutHtml() {
-  return `${backControl("Back to Login Page")}
-    <h1 class="headline">This link expired</h1>
-    <p class="lede">Code expired. Request a new one by signing in again.</p>`;
+  return `${backControl("Back to Sign In")}
+    <h1 class="headline">This Link Expired</h1>
+    <p class="lede">This reset link is no longer valid. Request a new one from the sign-in page.</p>
+    <button type="button" class="btn primary" data-action="forgot">Reset Password</button>`;
 }
 
 function handoffHtml() {
@@ -384,7 +600,7 @@ function handoffHtml() {
       <li>Tagline, once: A digital passport for every aero asset</li>
       <li>Side photograph is the engine hangar still. The other two stills are not on the page yet.</li>
       <li>Network choice on the sign-in form, using the dropdown field.</li>
-      <li>Reset Password, reset email, security verification method choice, email code, authenticator code, invalid code, expired code, and expired link.</li>
+      <li>Reset Password, reset email sent, set new password with requirements panel and strength meter, email-only 2FA (direct code entry with countdown resend + toast), method choice when authenticator is available, invalid/expired/timeout code states, remember-browser, and expired reset link.</li>
       <li>Incorrect credentials show field errors on email and password, not a page banner.</li>
     </ul>
 
@@ -396,7 +612,7 @@ function handoffHtml() {
       <li>Type is Open Sans. Body is 14/20. The page title is 32/40. Dialog titles are 24/32.</li>
       <li>Fields are the text, password, and dropdown fields.</li>
       <li>Errors follow the writing pattern: what went wrong, then what to do.</li>
-      <li>Get started still opens https://block.aero/get-started#request. Support is Contact customer support (mailto support@block.aero).</li>
+      <li>Get Started still opens https://block.aero/get-started#request. Support is Contact Customer Support (mailto support@block.aero).</li>
     </ul>
 
     <h2>How a network change works</h2>
@@ -460,6 +676,7 @@ function screenBody() {
   switch (state.screen) {
     case "forgot": return forgotHtml();
     case "sent": return sentHtml();
+    case "set-password": return setPasswordHtml();
     case "security": return securityHtml();
     case "email-code": return codeHtml("email");
     case "auth-code": return codeHtml("auth");
@@ -472,8 +689,23 @@ function reviewValue() {
   if (state.screen === "sign-in" && (state.fieldErrors.email === "Incorrect email" || state.fieldErrors.password === "Incorrect password")) {
     return "sign-in-error";
   }
+  if (state.screen === "set-password" && state.passwordHadError && state.passwordPanelOpen) {
+    return "set-password-error-focus";
+  }
+  if (state.screen === "set-password" && state.fieldErrors.newPassword === "Password does not meet the requirements") {
+    return "set-password-error";
+  }
+  if (state.screen === "set-password" && state.passwordPanelOpen && state.newPassword) {
+    const { strength } = passwordAnalysis(state.newPassword);
+    if (strength.tone === "strong") return "set-password-strong";
+    if (strength.tone === "ok") return "set-password-ok";
+    return "set-password-weak";
+  }
+  if (state.screen === "set-password" && state.passwordPanelOpen) return "set-password-focus";
   if (state.screen === "email-code" && state.codeStatus === "invalid") return "email-code-invalid";
   if (state.screen === "email-code" && state.codeStatus === "expired") return "email-code-expired";
+  if (state.screen === "email-code" && state.codeStatus === "timeout") return "email-code-timeout";
+  if (state.screen === "auth-code" && state.codeStatus === "invalid") return "auth-code-invalid";
   return state.screen;
 }
 
@@ -508,15 +740,23 @@ function render() {
   document.title = `Block Aero - ${({
     "sign-in": "Sign In",
     forgot: "Reset Password",
-    sent: "Check your email",
+    sent: "Reset Link has been sent",
+    "set-password": "Reset Password",
     security: "Security Verification",
-    "email-code": "Check your email",
-    "auth-code": "Authenticator code",
-    timeout: "This link expired",
+    "email-code": "Security Verification",
+    "auth-code": "Security Verification",
+    timeout: "This Link Expired",
     handoff: "Account sign-in",
   }[state.screen] || "Sign In")}`;
 
   document.getElementById("panel").innerHTML = state.screen === "handoff" ? handoffHtml() : productShell(screenBody());
+  let toastHost = document.getElementById("toast-host");
+  if (!toastHost) {
+    toastHost = document.createElement("div");
+    toastHost.id = "toast-host";
+    document.body.appendChild(toastHost);
+  }
+  toastHost.innerHTML = toastHtml();
   document.getElementById("live").textContent = state.live;
   syncReview();
   fitForm();
@@ -631,12 +871,25 @@ function onInput(event) {
     if (state.codeStatus === "sent") state.codeStatus = "";
   }
   if (id === "forgot-email") state.forgotEmail = event.target.value;
+  if (id === "new-password") {
+    state.newPassword = event.target.value;
+    if (state.passwordHadError || state.fieldErrors.newPassword) {
+      state.passwordHadError = false;
+      const next = { ...state.fieldErrors };
+      delete next.newPassword;
+      state.fieldErrors = next;
+    }
+    state.passwordPanelOpen = true;
+    state.focusId = "new-password";
+    render();
+  }
 }
 
 function onSubmit(event) {
   event.preventDefault();
   if (event.target.id === "signin-form") submitSignIn();
   if (event.target.id === "forgot-form") submitForgot();
+  if (event.target.id === "set-password-form") submitSetPassword();
   if (event.target.id === "security-form") submitSecurity();
   if (event.target.id === "code-form") submitCode();
 }
@@ -649,12 +902,22 @@ function onClick(event) {
     event.stopPropagation();
   }
   if (name === "forgot") go("forgot");
+  if (name === "reenter-email") {
+    state.forgotEmail = state.sentEmail || state.forgotEmail;
+    go("forgot");
+  }
   if (name === "back") {
     state.banner = "";
     state.fieldErrors = {};
+    state.passwordPanelOpen = false;
+    state.passwordHadError = false;
+    state.toast = "";
+    const fromTimeout = state.screen === "email-code" && state.codeStatus === "timeout";
+    const emailDirect = state.screen === "email-code" && state.codeEntryFrom === "sign-in";
     state.codeStatus = "";
-    if (state.screen === "email-code" || state.screen === "auth-code") go("security");
-    else if (state.screen === "security" || state.screen === "forgot" || state.screen === "sent" || state.screen === "timeout") go("sign-in");
+    if (fromTimeout || emailDirect || state.screen === "timeout") go("sign-in");
+    else if (state.screen === "email-code" || state.screen === "auth-code") go("security");
+    else if (state.screen === "security" || state.screen === "forgot" || state.screen === "sent" || state.screen === "set-password") go("sign-in");
     else go("sign-in");
   }
   if (name === "verify-method") {
@@ -667,6 +930,25 @@ function onClick(event) {
     state.focusId = "password";
     render();
   }
+  if (name === "toggle-new-password") {
+    state.showNewPassword = !state.showNewPassword;
+    state.passwordPanelOpen = true;
+    state.focusId = "new-password";
+    render();
+  }
+  if (name === "toggle-remember") {
+    state.rememberBrowser = !state.rememberBrowser;
+    state.focusId = "remember-browser";
+    render();
+  }
+  if (name === "remember-info") {
+    state.rememberTipOpen = !state.rememberTipOpen;
+    state.live = state.rememberTipOpen
+      ? "If the browser blocks or clears cookies, this feature may not work."
+      : "";
+    state.focusId = action.id || null;
+    render();
+  }
   if (name === "toggle-network" || action.id === "network") {
     if (state.dropdownOpen && Date.now() - networkOpenedAt < 400) return;
     state.dropdownOpen = !state.dropdownOpen;
@@ -675,10 +957,18 @@ function onClick(event) {
     render();
   }
   if (name === "pick-network") pickNetwork(action.dataset.id);
-  if (name === "resend") {
-    state.resendIn = 30;
-    state.codeStatus = "sent";
+  if (name === "resend" || name === "request-new-code") {
+    state.resendIn = name === "resend" ? 60 : 0;
+    state.code = "";
+    state.codeStatus = "";
     state.fieldErrors = {};
+    state.focusId = "code";
+    if (name === "resend") {
+      showToast("Verification email sent successfully.");
+      state.live = "Verification email sent successfully.";
+    } else {
+      state.live = "Enter the new verification code.";
+    }
     render();
   }
 }
@@ -689,6 +979,9 @@ function applyReview(value) {
   state.codeStatus = "";
   state.fieldErrors = {};
   state.focusId = null;
+  state.passwordPanelOpen = false;
+  state.passwordHadError = false;
+  state.showNewPassword = false;
   if (value === "sign-in" || value === "sign-in-error") {
     state.screen = "sign-in";
     if (value === "sign-in-error") {
@@ -703,13 +996,58 @@ function applyReview(value) {
   else if (value === "sent") {
     state.screen = "sent";
     state.sentEmail = state.sentEmail || state.forgotEmail || "ada@block.aero";
+  } else if (
+    value === "set-password"
+    || value === "set-password-focus"
+    || value === "set-password-weak"
+    || value === "set-password-ok"
+    || value === "set-password-strong"
+    || value === "set-password-error"
+    || value === "set-password-error-focus"
+  ) {
+    state.screen = "set-password";
+    state.newPassword = "";
+    if (value === "set-password-focus") {
+      state.passwordPanelOpen = true;
+      state.focusId = "new-password";
+    } else if (value === "set-password-weak") {
+      state.newPassword = "a1";
+      state.passwordPanelOpen = true;
+      state.focusId = "new-password";
+    } else if (value === "set-password-ok") {
+      state.newPassword = "Abcdef1";
+      state.passwordPanelOpen = true;
+      state.focusId = "new-password";
+    } else if (value === "set-password-strong") {
+      state.newPassword = "Abcdef1!";
+      state.passwordPanelOpen = true;
+      state.focusId = "new-password";
+    } else if (value === "set-password-error") {
+      state.newPassword = "a1";
+      state.passwordHadError = true;
+      state.fieldErrors = { newPassword: "Password does not meet the requirements" };
+    } else if (value === "set-password-error-focus") {
+      state.newPassword = "a1";
+      state.passwordHadError = true;
+      state.passwordPanelOpen = true;
+      state.fieldErrors = { newPassword: "Password does not meet the requirements" };
+      state.focusId = "new-password";
+    }
   } else if (value === "security") {
     state.screen = "security";
     state.verifyMethod = "auth";
-  } else if (value === "email-code" || value === "email-code-invalid" || value === "email-code-expired") {
+  } else if (value === "email-code" || value === "email-code-invalid" || value === "email-code-expired" || value === "email-code-timeout") {
     state.screen = "email-code";
     state.verifyMethod = "email";
+    state.codeEntryFrom = "sign-in";
     state.email = state.email || "ada@block.aero";
+    state.rememberBrowser = true;
+    state.resendIn = 60;
+    state.toast = "";
+    if (value === "email-code") {
+      state.code = "";
+      showToast("Verification email sent successfully.");
+    }
     if (value === "email-code-invalid") {
       state.code = "000000";
       state.fieldErrors = { code: "Invalid code. Check the code and try again." };
@@ -717,14 +1055,26 @@ function applyReview(value) {
     }
     if (value === "email-code-expired") {
       state.code = "111111";
-      state.fieldErrors = { code: "Code expired. Request a new one." };
+      state.fieldErrors = { code: "Code expired. Please request a new one." };
       state.codeStatus = "expired";
+      state.resendIn = 0;
     }
-  } else if (value === "auth-code") {
+    if (value === "email-code-timeout") {
+      state.code = "";
+      state.resendIn = 0;
+      state.codeStatus = "timeout";
+    }
+  } else if (value === "auth-code" || value === "auth-code-invalid") {
     state.screen = "auth-code";
     state.verifyMethod = "auth";
     state.email = state.email || "auth@block.aero";
-  }   else if (value === "timeout") state.screen = "timeout";
+    state.rememberBrowser = true;
+    if (value === "auth-code-invalid") {
+      state.code = "123456";
+      state.fieldErrors = { code: "Invalid code" };
+      state.codeStatus = "invalid";
+    }
+  } else if (value === "timeout") state.screen = "timeout";
   else if (value === "handoff") state.screen = "handoff";
   const hashScreen = state.screen;
   const next = `#/${hashScreen}`;
@@ -764,6 +1114,10 @@ function onKey(event) {
       state.dropdownOpen = false;
       state.focusId = "network";
       render();
+    } else if (state.rememberTipOpen) {
+      state.rememberTipOpen = false;
+      state.focusId = "remember-info";
+      render();
     }
     return;
   }
@@ -771,23 +1125,75 @@ function onKey(event) {
 
 function readRoute() {
   const name = (location.hash || "#/sign-in").replace(/^#\//, "").split("?")[0];
-  const known = ["sign-in", "forgot", "sent", "security", "email-code", "auth-code", "timeout", "handoff"];
+  const known = ["sign-in", "forgot", "sent", "set-password", "security", "email-code", "auth-code", "timeout", "handoff"];
+  const previous = state.screen;
   state.screen = known.includes(name) ? name : "sign-in";
   state.dropdownOpen = false;
+  if (state.screen !== "set-password") {
+    state.passwordPanelOpen = false;
+    state.passwordHadError = false;
+  }
+  if (state.screen === "email-code" && previous !== "email-code") {
+    state.verifyMethod = "email";
+    state.codeEntryFrom = "sign-in";
+    state.rememberBrowser = true;
+    if (!state.resendIn && state.codeStatus !== "timeout" && state.codeStatus !== "expired") {
+      state.resendIn = 60;
+      showToast("Verification email sent successfully.");
+    }
+  }
   render();
 }
 
+function onPasswordFocusIn(event) {
+  if (state.screen !== "set-password") return;
+  if (!event.target.closest(".pw-field")) return;
+  if (!state.passwordPanelOpen) {
+    state.passwordPanelOpen = true;
+    state.focusId = event.target.id === "new-password" ? "new-password" : state.focusId;
+    render();
+  }
+}
+
+function onPasswordFocusOut(event) {
+  if (state.screen !== "set-password") return;
+  // Skip blur from nodes removed during render (innerHTML replace).
+  if (!event.target.isConnected) return;
+  const field = event.target.closest(".pw-field");
+  if (!field) return;
+  const next = event.relatedTarget;
+  if (next && field.contains(next)) return;
+  window.setTimeout(() => {
+    if (state.screen !== "set-password") return;
+    const active = document.activeElement;
+    const wrap = document.querySelector(".pw-field");
+    if (wrap && active && wrap.contains(active)) return;
+    if (!state.passwordPanelOpen) return;
+    state.passwordPanelOpen = false;
+    render();
+  }, 0);
+}
+
 function init() {
-  document.getElementById("panel").addEventListener("click", onClick);
-  document.getElementById("panel").addEventListener("input", onInput);
-  document.getElementById("panel").addEventListener("submit", onSubmit);
+  const panel = document.getElementById("panel");
+  panel.addEventListener("click", onClick);
+  panel.addEventListener("input", onInput);
+  panel.addEventListener("submit", onSubmit);
+  panel.addEventListener("focusin", onPasswordFocusIn);
+  panel.addEventListener("focusout", onPasswordFocusOut);
   document.addEventListener("keydown", onKey);
   document.addEventListener("click", (event) => {
-    if (!state.dropdownOpen) return;
-    if (Date.now() - networkOpenedAt < 400) return;
-    if (event.target.closest(".select-wrap")) return;
-    state.dropdownOpen = false;
-    render();
+    if (state.dropdownOpen) {
+      if (Date.now() - networkOpenedAt < 400) return;
+      if (event.target.closest(".select-wrap")) return;
+      state.dropdownOpen = false;
+      render();
+      return;
+    }
+    if (state.rememberTipOpen && !event.target.closest(".info-tip-wrap")) {
+      state.rememberTipOpen = false;
+      render();
+    }
   });
   document.getElementById("rev-toggle").addEventListener("click", (event) => {
     event.stopPropagation();
@@ -813,8 +1219,16 @@ function init() {
     state.resendIn -= 1;
     const button = document.getElementById("resend");
     if (!button) return;
-    button.textContent = state.resendIn ? `Resend code in ${state.resendIn}s` : "Resend code";
-    button.disabled = state.resendIn > 0;
+    if (state.codeStatus === "timeout") return;
+    if (state.resendIn > 0) {
+      button.textContent = `${state.resendIn}s to Enter Code`;
+      button.disabled = true;
+      button.classList.add("is-countdown");
+    } else {
+      button.textContent = "Resend Code";
+      button.disabled = false;
+      button.classList.remove("is-countdown");
+    }
   }, 1000);
   window.addEventListener("popstate", readRoute);
   window.addEventListener("hashchange", readRoute);
