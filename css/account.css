@@ -114,7 +114,15 @@ input {
   background: var(--bg-primary);
 }
 
-/* Tall desktop: more air above the lockup so it isn't pinned to the top edge. */
+/* Desktop: top/bottom air in the same family as brand→form gap (avoids a tight lockup on mid heights). */
+@media (min-width: 1101px) {
+  .form-col {
+    padding-top: clamp(64px, 8vh, 96px);
+    padding-bottom: clamp(64px, 8vh, 96px);
+  }
+}
+
+/* Tall desktop: a bit more air above/below the lockup. */
 @media (min-width: 1101px) and (min-height: 860px) {
   .form-col {
     padding-top: clamp(72px, 9vh, 112px);
@@ -170,7 +178,7 @@ input {
 .form-block {
   width: min(var(--form-w), 100%);
   /* Vertical offset set in placeContent(): clamp(min gap, optical center, max gap). */
-  margin-top: calc(48px * var(--fit, 1));
+  margin-top: calc(80px * var(--fit, 1));
   margin-bottom: 0;
   flex: 0 0 auto;
 }
@@ -232,7 +240,7 @@ input {
 }
 
 .field {
-  margin-top: calc(32px * var(--fit, 1));
+  margin-top: calc(24px * var(--fit, 1));
 }
 
 .field-label {
@@ -421,15 +429,15 @@ input {
 @media (min-width: 1101px) {
   .field {
     position: relative;
-    /* Extra room under controls so overlay errors clear the next label. */
-    margin-top: calc(40px * var(--fit, 1));
+    /* Keep fields tighter; still enough air for overlay errors above the next label. */
+    margin-top: calc(28px * var(--fit, 1));
   }
 
   .field > .error {
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(100% + 8px);
+    top: calc(100% + 6px);
     margin: 0;
     z-index: 1;
   }
@@ -561,7 +569,7 @@ input {
   height: var(--button-h);
   min-height: var(--button-h);
   max-height: var(--button-h);
-  margin-top: calc(48px * var(--fit, 1));
+  margin-top: calc(32px * var(--fit, 1));
   background: var(--accent);
   color: #fff;
   border: 0;
@@ -594,6 +602,11 @@ input {
   gap: 8px 16px;
   margin-top: calc(8px * var(--fit, 1));
   align-items: baseline;
+}
+
+.actions.quiet {
+  display: block;
+  gap: 0;
 }
 
 .quiet {
@@ -922,8 +935,6 @@ input {
   .field .error,
   .field .helper {
     margin-top: 4px;
-    font-size: 12px;
-    line-height: 16px;
   }
 
   .btn.primary {

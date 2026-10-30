@@ -505,7 +505,7 @@ function render() {
   document.body.dataset.palette = state.palette;
   document.documentElement.dataset.palette = state.palette;
   document.getElementById("account").dataset.host = state.host;
-  document.title = `${({
+  document.title = `Block Aero - ${({
     "sign-in": "Sign In",
     forgot: "Reset Password",
     sent: "Check your email",
@@ -514,7 +514,7 @@ function render() {
     "auth-code": "Authenticator code",
     timeout: "This link expired",
     handoff: "Account sign-in",
-  }[state.screen])} · Block Aero`;
+  }[state.screen] || "Sign In")}`;
 
   document.getElementById("panel").innerHTML = state.screen === "handoff" ? handoffHtml() : productShell(screenBody());
   document.getElementById("live").textContent = state.live;
@@ -538,7 +538,7 @@ function render() {
 
 function contentMinGap(block) {
   const mobileMin = Number.parseFloat(getComputedStyle(block).getPropertyValue("--mobile-content-min")) || 0;
-  return mobileMin || 48;
+  return mobileMin || 80;
 }
 
 function fitForm() {
@@ -573,10 +573,10 @@ function fitForm() {
   block.style.marginTop = `${reserved}px`;
 }
 
-/** Keep brand top-pinned.
- *  Desktop: margin-top = clamp(minGap, freeSpace / 2, maxGap) — eases short copy down a bit.
- *  Mobile: fixed minGap only — no optical centering, so short screens (e.g. Check your email)
- *  stay under the lockup instead of floating mid-column. */
+/** Place brand + form.
+ *  Mid desktop: fixed CSS top pad + fixed brand→form gap so the lockup never jumps between screens.
+ *  Tall desktop (≥860px): CSS pad clamps + ease the Sign In block down a bit.
+ *  Mobile: fixed minGap only — short screens stay under the lockup. */
 function placeContent() {
   const column = document.querySelector(".form-col");
   const scroll = document.querySelector(".form-scroll");
@@ -589,19 +589,37 @@ function placeContent() {
   ) || 0;
   const minGap = mobileMin
     ? Math.round(Math.max(mobileMin * 0.9, mobileMin * Math.max(fit, 0.85)))
-    : Math.round(48 * fit);
+    : Math.round(80 * fit);
+  const tallDesktop = !mobileMin && window.matchMedia("(min-width: 1101px) and (min-height: 860px)").matches;
 
-  block.style.marginTop = "0px";
-  const free = scroll.clientHeight - block.offsetHeight;
+  // Always clear any leftover inline pads from older equal-split logic.
+  column.style.paddingTop = "";
+  column.style.paddingBottom = "";
+  scroll.style.flex = "";
 
-  let top = Math.min(minGap, Math.max(0, free));
-  if (!mobileMin && free > minGap) {
-    // Tall screens: ease content a bit below the lockup without floating mid-column.
-    const maxGap = Math.round(Math.min(132, Math.max(minGap, window.innerHeight * 0.12)));
-    const ideal = Math.min(free * 0.32, maxGap);
-    top = Math.min(maxGap, Math.max(minGap, ideal));
+  if (mobileMin) {
+    const free = scroll.clientHeight - block.offsetHeight;
+    block.style.marginTop = `${Math.min(minGap, Math.max(0, free))}px`;
+    return;
   }
-  block.style.marginTop = `${top}px`;
+
+  // Tall screens: ease brand→form gap; outer pads stay on CSS.
+  if (tallDesktop) {
+    block.style.marginTop = "0px";
+    const free = scroll.clientHeight - block.offsetHeight;
+    const padTop = Number.parseFloat(getComputedStyle(column).paddingTop) || minGap;
+    let top = Math.min(minGap, Math.max(0, free));
+    if (free > minGap) {
+      const maxGap = Math.round(Math.min(Math.max(padTop + 56, minGap), 144, window.innerHeight * 0.16));
+      const ideal = Math.min(free * 0.38, Math.max(padTop + 28, minGap));
+      top = Math.min(maxGap, Math.max(minGap, ideal));
+    }
+    block.style.marginTop = `${top}px`;
+    return;
+  }
+
+  // Mid desktop: lockup position is CSS-only; keep brand→form gap fixed across screens.
+  block.style.marginTop = `${minGap}px`;
 }
 
 function onInput(event) {
