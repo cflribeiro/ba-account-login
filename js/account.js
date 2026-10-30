@@ -470,7 +470,7 @@ function securityHtml() {
 
 function forgotHtml() {
   const err = state.fieldErrors.forgotEmail;
-  return `${backControl("Back to Sign In")}
+  return `${backControl("Back")}
     <h1 class="headline">Reset Password</h1>
     <p class="lede">Please provide your work email address and we will email you instructions to reset your password</p>
     <form id="forgot-form" novalidate>
@@ -485,7 +485,7 @@ function forgotHtml() {
 
 function sentHtml() {
   const email = state.sentEmail || "that address";
-  return `${backControl("Back to Sign In")}
+  return `${backControl("Back")}
     <h1 class="headline">Reset Link has been sent</h1>
     <p class="lede">We have sent an email to <strong>${esc(email)}</strong> containing instructions to reset account password.</p>
     <p class="lede">Please check your spam folder if you do not receive our email from member@block.aero.</p>
@@ -496,7 +496,7 @@ function setPasswordHtml() {
   const err = state.fieldErrors.newPassword;
   const showFailIcons = state.passwordHadError && state.passwordPanelOpen;
   const invalid = Boolean(err);
-  return `${backControl("Back to Sign In")}
+  return `${backControl("Back")}
     <h1 class="headline">Reset Password</h1>
     <p class="lede">Please enter your new password</p>
     <form id="set-password-form" novalidate>
@@ -555,7 +555,6 @@ function codeHtml(kind) {
   const inputValue = timedOut ? "" : esc(state.code);
   const inputDisabled = timedOut ? "disabled" : "";
   const submitDisabled = expired || timedOut ? "disabled" : "";
-  const backLabel = timedOut || state.codeEntryFrom === "sign-in" ? "Back to Sign In" : "Back";
   const requestNew = expired
     ? `<button type="button" class="btn secondary" data-action="request-new-code" id="request-new-code">Request New Code</button>`
     : "";
@@ -565,7 +564,7 @@ function codeHtml(kind) {
       : emailResendButton())
     : "";
 
-  return `${backControl(backLabel)}
+  return `${backControl("Back")}
     <h1 class="headline">${title}</h1>
     <p class="lede">${lede}</p>
     <form id="code-form" novalidate>
@@ -582,7 +581,7 @@ function codeHtml(kind) {
 }
 
 function timeoutHtml() {
-  return `${backControl("Back to Sign In")}
+  return `${backControl("Back")}
     <h1 class="headline">This Link Expired</h1>
     <p class="lede">This reset link is no longer valid. Request a new one from the sign-in page.</p>
     <button type="button" class="btn primary" data-action="forgot">Reset Password</button>`;
